@@ -1,12 +1,11 @@
 from kafka import KafkaConsumer
 from apprptdns.dns_pb2 import update
+from apprptdns.node import cache
 from google.protobuf.json_format import MessageToDict
-#from cachetools import TTLCache
 
 class MessageBusServer():
 
     def __init__(self):
-#        self.entries = TTLCache(512, 120)
         self.consumer = None
 
     def deserialize(self, message):
@@ -31,7 +30,8 @@ class MessageBusServer():
             try:
                 for message in self.consumer:
                     if message.value:
-                        print(message.value)
+                        # TODO: Check if now < timestamp + TTL, don't load if it's old
+                        cache[message.value.node] = message.value
             except Exception as error:
                 print(error)
                 continue

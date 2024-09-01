@@ -1,5 +1,5 @@
 import re
-from apprptdns.node import getNode
+from apprptdns.node import getNode, asTXT
 from dnslib import (
             DNSError,
             DNSRecord, A,
@@ -39,14 +39,20 @@ def dns_response(data):
 
     if question.qtype == QTYPE.TXT:
         node = getNode(ATXTRegex.search(qname))
-        rdata = TXT(node.asTXT)
+        if not node:
+            return error(request)
+        rdata = TXT(asTXT(node))
 
     elif question.qtype == QTYPE.SRV:
         node = getNode(srvRegex.search(qname))
-        rdata = SRV(priority = 0, weight = 0, port = node.port, target = f"{node.number}.{domain}")
+        if not node:
+            return error(request)
+        rdata = SRV(priority = 0, weight = 0, port = node.port, target = f"{node.node}.{domain}")
 
     elif question.qtype == QTYPE.A:
         node = getNode(ATXTRegex.search(qname))
+        if not node:
+            return error(request)
         rdata = A(node.ip)
 
     else:

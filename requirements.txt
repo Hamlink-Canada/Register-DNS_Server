@@ -1,4 +1,4 @@
 dnslib
 kafka-python
 protobuf
-
+cachetools

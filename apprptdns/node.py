@@ -1,26 +1,27 @@
 from dataclasses import dataclass
+from cachetools import TTLCache
 
-@dataclass
-class Node:
-    number: int
-    ip: str
-    port: int
+cache = TTLCache(10240, 60)
 
-    @property
-    def asTXT(self):
-        result = [
-                    "NN=" + str(self.number),
-                    "RT=",
-                    "RB=0",
-                    "IP=" + self.ip,
-                    "PIP=",
-                    "PT=" + str(self.port),
-                    "RH=",
-                ]
-        return [w.encode() for w in result]
+def asTXT(node):
+    result = [
+                "NN=" + str(node.node),
+                "RT=",
+                "RB=0",
+                "IP=" + node.ipaddress,
+                "PIP=",
+                "PT=" + str(node.port),
+                "RH=",
+            ]
+    return [w.encode() for w in result]
 
 def getNode(number):
     if not number:
         return None
-    node = number.group(1)
-    return Node(node, "111.111.111.111", 5061)
+    node = int(number.group(1))
+    if node not in cache:
+        print(f"{node} not found in cache")
+        return None
+
+    result = cache[node]
+    return result
