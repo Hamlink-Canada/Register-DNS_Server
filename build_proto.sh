@@ -1,3 +1,3 @@
 #!/bin/sh
 
-protoc --python_out lib dns.proto
+protoc --python_out apprptdns dns.proto

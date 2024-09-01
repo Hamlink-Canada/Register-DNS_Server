@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime
-from lib.dns_pb2 import update
+from apprptdns.dns_pb2 import update
 from kafka import KafkaProducer
 
 Entry = update()

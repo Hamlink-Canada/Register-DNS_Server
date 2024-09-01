@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from lib.servers import ThreadedTCPServer, ThreadedUDPServer
-from lib.handlers import TCPRequestHandler, UDPRequestHandler
-from lib.messagebus import MessageBusServer
+from apprptdns.servers import ThreadedTCPServer, ThreadedUDPServer
+from apprptdns.handlers import TCPRequestHandler, UDPRequestHandler
+from apprptdns.messagebus import MessageBusServer
 import threading
 import time
 import sys

@@ -1,5 +1,5 @@
 .apprptdns
-lib/*_pb2.py
+apprptdns/*_pb2.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
