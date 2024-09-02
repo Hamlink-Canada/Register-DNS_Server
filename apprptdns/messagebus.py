@@ -22,7 +22,7 @@ class MessageBusServer():
 
     def serve_forever(self):
         self.consumer = KafkaConsumer(
-            'test',
+            config['kafka']['topic'],
             bootstrap_servers=config['kafka']['bootstrap'],
             max_poll_records = 100,
             value_deserializer=lambda m: self.deserialize(m),
