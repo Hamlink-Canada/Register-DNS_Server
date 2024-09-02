@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from datetime import datetime
 from apprptdns.dns_pb2 import update
+from apprptdns.config import config
 from kafka import KafkaProducer
+
+config.read('config.ini')
 
 Entry = update()
 Entry.timestamp.FromDatetime(datetime.now())
@@ -13,7 +16,7 @@ Entry.server = "Manual"
 
 print(Entry)
 
-producer = KafkaProducer(bootstrap_servers='localhost:9092')
+producer = KafkaProducer(bootstrap_servers=config['kafka']['bootstrap'])
 producer.send("test", key=str(Entry.node).encode(), value=Entry.SerializeToString())
 producer.flush()
 

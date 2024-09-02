@@ -2,6 +2,8 @@
 from apprptdns.servers import ThreadedTCPServer, ThreadedUDPServer
 from apprptdns.handlers import TCPRequestHandler, UDPRequestHandler
 from apprptdns.messagebus import MessageBusServer
+from apprptdns.config import config
+from apprptdns.cache import cache
 import threading
 import time
 import sys
@@ -9,10 +11,12 @@ import sys
 port = 5053
 
 if __name__ == '__main__':
+    config.read('config.ini')
+    cache.setupCache()
     servers = []
     servers.append(ThreadedUDPServer(('', port), UDPRequestHandler))
     servers.append(ThreadedTCPServer(('', port), TCPRequestHandler))
-    servers.append(MessageBusServer())
+    servers.append(MessageBusServer(cache))
 
     for s in servers:
         thread = threading.Thread(target=s.serve_forever)  # that thread will start one more thread for each request

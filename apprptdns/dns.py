@@ -1,5 +1,6 @@
 import re
 from apprptdns.node import getNode, asTXT
+from apprptdns.config import config
 from dnslib import (
             DNSError,
             DNSRecord, A,
@@ -7,7 +8,7 @@ from dnslib import (
             TXT, SRV,
             )
 
-domain = "nodes.pttlink.org."
+
 srvRegex = re.compile(r"^_iax\._udp\.([0-9]*)\.")
 ATXTRegex = re.compile(r"^([0-9]*)\.")
 
@@ -20,6 +21,10 @@ def error(request = None):
     return reply.pack()
 
 def dns_response(data):
+    domain = config['dns']['basedomain']
+    if not domain.endswith("."):
+        domain = domain + "."
+
     # Parse the DNS request
     try: 
         request = DNSRecord.parse(data)

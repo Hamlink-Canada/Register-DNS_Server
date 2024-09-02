@@ -1,12 +1,14 @@
 from kafka import KafkaConsumer
 from apprptdns.dns_pb2 import update
-from apprptdns.node import cache
+from apprptdns.cache import cache
+from apprptdns.config import config
 from google.protobuf.json_format import MessageToDict
 
 class MessageBusServer():
 
-    def __init__(self):
+    def __init__(self, cache):
         self.consumer = None
+        self.cache = cache.getCache()
 
     def deserialize(self, message):
         try: 
@@ -20,7 +22,7 @@ class MessageBusServer():
     def serve_forever(self):
         self.consumer = KafkaConsumer(
             'test',
-            bootstrap_servers='localhost:9092',
+            bootstrap_servers=config['kafka']['bootstrap'],
             max_poll_records = 100,
             value_deserializer=lambda m: self.deserialize(m),
             auto_offset_reset='earliest',
@@ -31,7 +33,7 @@ class MessageBusServer():
                 for message in self.consumer:
                     if message.value:
                         # TODO: Check if now < timestamp + TTL, don't load if it's old
-                        cache[message.value.node] = message.value
+                        self.cache[message.value.node] = message.value
             except Exception as error:
                 print(error)
                 continue

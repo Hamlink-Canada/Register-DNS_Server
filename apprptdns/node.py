@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from cachetools import TTLCache
-
-cache = TTLCache(10240, 60)
+from apprptdns.config import config
+from apprptdns.cache import cache
 
 def asTXT(node):
     result = [
@@ -16,12 +16,13 @@ def asTXT(node):
     return [w.encode() for w in result]
 
 def getNode(number):
+    localCache = cache.getCache()
     if not number:
         return None
     node = int(number.group(1))
-    if node not in cache:
+    if node not in localCache:
         print(f"{node} not found in cache")
         return None
 
-    result = cache[node]
+    result = localCache[node]
     return result
