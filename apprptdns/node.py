@@ -6,12 +6,12 @@ from apprptdns.cache import cache
 def asTXT(node):
     result = [
                 "NN=" + str(node.node),
-                "RT=",
+                "RT=" + node.timestamp.ToDatetime().replace(microsecond=0).isoformat(),
                 "RB=0",
                 "IP=" + node.ipaddress,
                 "PIP=",
                 "PT=" + str(node.port),
-                "RH=",
+                "RH=" + node.server,
             ]
     return [w.encode() for w in result]
 
