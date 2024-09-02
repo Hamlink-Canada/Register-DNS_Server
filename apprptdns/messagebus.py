@@ -16,7 +16,7 @@ class MessageBusServer():
             result = update()
             result.ParseFromString(message)
         except Exception as error:
-            logging.error(error)
+            logging.error("Error deserializing from queue: %s", error)
             return None
         return result
 
@@ -36,7 +36,7 @@ class MessageBusServer():
                         # TODO: Check if now < timestamp + TTL, don't load if it's old
                         self.cache[message.value.node] = message.value
             except Exception as error:
-                logging.error(error)
+                logging.error("Error parsing message from queue: %s", error)
                 continue
 
     def shutdown(self):
