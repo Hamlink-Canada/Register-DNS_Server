@@ -58,7 +58,7 @@ def dns_response(data):
         node = getNode(ATXTRegex.search(qname))
         if not node:
             return error(request)
-        rdata = A(node.ip)
+        rdata = A(node.ipaddress)
 
     else:
         # We only reply to TXT, SRV and A requests
