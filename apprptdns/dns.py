@@ -1,4 +1,5 @@
 import re
+import logging
 from apprptdns.node import getNode, asTXT
 from apprptdns.config import config
 from dnslib import (
@@ -29,8 +30,8 @@ def dns_response(data):
     try: 
         request = DNSRecord.parse(data)
     except DNSError:
-        print("Got Invalid Question")
-        return error()
+        logging.debug("Got Invalid Question")
+        return None
 
     # Get the requested resource as a DNSLabel
     question = request.get_q()
@@ -62,7 +63,7 @@ def dns_response(data):
 
     else:
         # We only reply to TXT, SRV and A requests
-        print(f"Something else: {question.qtype}")
+        logging.debug("Something else: %s", question.qtype)
         return error(request)
 
     reply = request.reply()

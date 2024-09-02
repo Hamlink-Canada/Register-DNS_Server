@@ -3,6 +3,7 @@ from apprptdns.dns_pb2 import update
 from apprptdns.cache import cache
 from apprptdns.config import config
 from google.protobuf.json_format import MessageToDict
+import logging
 
 class MessageBusServer():
 
@@ -15,7 +16,7 @@ class MessageBusServer():
             result = update()
             result.ParseFromString(message)
         except Exception as error:
-            print(error)
+            logging.error(error)
             return None
         return result
 
@@ -35,7 +36,7 @@ class MessageBusServer():
                         # TODO: Check if now < timestamp + TTL, don't load if it's old
                         self.cache[message.value.node] = message.value
             except Exception as error:
-                print(error)
+                logging.error(error)
                 continue
 
     def shutdown(self):

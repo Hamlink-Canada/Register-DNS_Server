@@ -7,12 +7,19 @@ from apprptdns.cache import cache
 import threading
 import time
 import sys
+import logging
 
-port = 5053
+logging.basicConfig(
+    format="{asctime} - {levelname} - {message}",
+    style="{",
+    datefmt="%Y-%m-%d %H:%M",
+    level=logging.INFO,
+ )
 
 if __name__ == '__main__':
     config.read('config.ini')
     cache.setupCache()
+    port = int(config['dns']['port'])
     servers = []
     servers.append(ThreadedUDPServer(('', port), UDPRequestHandler))
     servers.append(ThreadedTCPServer(('', port), TCPRequestHandler))
@@ -23,7 +30,7 @@ if __name__ == '__main__':
         thread.daemon = True  # exit the server thread when the main thread terminates
         thread.start()
         if hasattr(s, "RequestHandlerClass"):
-            print("%s server loop running in thread: %s" % (s.RequestHandlerClass.__name__[:3], thread.name))
+            logging.info("%s server loop running in thread: %s" % (s.RequestHandlerClass.__name__[:3], thread.name))
 
     try:
         while 1:

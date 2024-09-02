@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from cachetools import TTLCache
 from apprptdns.config import config
 from apprptdns.cache import cache
+import logging
 
 def asTXT(node):
     result = [
@@ -21,8 +22,10 @@ def getNode(number):
         return None
     node = int(number.group(1))
     if node not in localCache:
-        print(f"{node} not found in cache")
+        logging.debug(f"{node} not found in cache")
         return None
+
+    # TODO: Check TTL to see if it's still valid. 
 
     result = localCache[node]
     return result

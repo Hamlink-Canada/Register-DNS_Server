@@ -3,6 +3,7 @@ import datetime
 import struct
 import sys
 import traceback
+import logging
 from apprptdns.dns import dns_response
 
 class BaseRequestHandler(socketserver.BaseRequestHandler):
@@ -15,7 +16,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         now = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-        print("\n\n%s request %s (%s %s):" % (self.__class__.__name__[:3], now, self.client_address[0],
+        logging.debug("\n\n%s request %s (%s %s):" % (self.__class__.__name__[:3], now, self.client_address[0],
                                                self.client_address[1]))
         try:
             data = self.get_data()
@@ -23,6 +24,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
             if response:
                 self.send_data(response)
         except Exception:
+            logging.error("Something bad happened")
             traceback.print_exc(file=sys.stderr)
 
 class TCPRequestHandler(BaseRequestHandler):
