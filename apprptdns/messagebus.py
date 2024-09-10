@@ -1,4 +1,4 @@
-from kafka import KafkaConsumer
+from confluent_kafka import Consumer
 from apprptdns.dns_pb2 import update
 from apprptdns.cache import cache
 from apprptdns.config import config
@@ -11,6 +11,13 @@ class MessageBusServer():
         self.consumer = None
         self.cache = cache.getCache()
 
+        self.conf = {'bootstrap.servers': config['kafka']['bootstrap'],
+            'group.id': 'DNSServer',
+            'auto.offset.reset': 'earliest',
+            'enable.auto.commit': False,
+        }
+
+
     def deserialize(self, message):
         try: 
             result = update()
@@ -21,20 +28,17 @@ class MessageBusServer():
         return result
 
     def serve_forever(self):
-        self.consumer = KafkaConsumer(
-            config['kafka']['topic'],
-            bootstrap_servers=config['kafka']['bootstrap'],
-            max_poll_records = 100,
-            value_deserializer=lambda m: self.deserialize(m),
-            auto_offset_reset='earliest',
-        )
+        self.consumer = Consumer(self.conf)
+        self.consumer.subscribe([config['kafka']['topic']])
         self.running = True
         while self.running:
             try:
-                for message in self.consumer:
-                    if message.value:
-                        # TODO: Check if now < timestamp + TTL, don't load if it's old
-                        self.cache[message.value.node] = message.value
+                message = self.consumer.poll(timeout=1.0)
+                if message is None: continue
+                if message.value():
+                    message = self.deserialize(message.value())
+                    # TODO: Check if now < timestamp + TTL, don't load if it's old
+                    self.cache[message.node] = message
             except Exception as error:
                 logging.error("Error parsing message from queue: %s", error)
                 continue

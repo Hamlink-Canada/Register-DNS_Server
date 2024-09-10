@@ -1,4 +1,5 @@
 dnslib
-kafka-python
+confluent_kafka
 protobuf
 cachetools
+
