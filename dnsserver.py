@@ -13,7 +13,7 @@ logging.basicConfig(
     format="{asctime} - {levelname} - {message}",
     style="{",
     datefmt="%Y-%m-%d %H:%M",
-    level=logging.INFO,
+    level=logging.DEBUG,
  )
 
 if __name__ == '__main__':

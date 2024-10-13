@@ -50,7 +50,9 @@ class MessageBusServer():
                 if message is None: continue
                 if message.value():
                     message = self.deserialize(message.value())
-                    if message.timestamp.ToDatetime() + timedelta(seconds=message.ttl) > datetime.now():
+                    # TODO: TTL in the message is how often the client is suppose to refresh in seconds
+                    #       But, they may not refresh within that time. So, we'll do it in minutes
+                    if message.timestamp.ToDatetime() + timedelta(minutes=message.ttl) > datetime.now():
                         logging.debug("Node %s update with timestamp %s", message.node, message.timestamp.ToDatetime())
                         self.cache[message.node] = message
                     else:
