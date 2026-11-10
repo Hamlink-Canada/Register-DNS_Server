@@ -9,6 +9,8 @@ Kafka topic. Each DNS instance reads the full topic and keeps its own directory 
 memory. After a restart, it rebuilds that directory from Kafka and ignores expired
 registrations.
 
+Full deployment and configuration details are in the [Register-DNS_Server operator guide](https://hamlink-canada.github.io/apt-rpt-docs/projects/dns/).
+
 ## Run the service
 
 Choose a versioned image from `ghcr.io/hamlink-canada/rpt-dnsserver` when a release
@@ -105,7 +107,7 @@ the container must be readable by that user.
 
 ## Development
 
-Use Python 3.13+ and uv. Place `dnsserver` and `rpt_protobuf` next to one another,
+Use Python 3.13+ and uv. Place `Register-DNS_Server` and `rpt_protobuf` next to one another,
 with the library checked out on an up-to-date `main` branch.
 The uv source override installs that sibling library in editable mode.
 
