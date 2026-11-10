@@ -1,0 +1,8 @@
+host = "0.0.0.0"
+port = 5054
+domain = "nodes.example.org"
+cache_size = 10000
+[kafka]
+bootstrap = "localhost:9092"
+topic = "rpt.registrations"
+group = "rpt-dns"
