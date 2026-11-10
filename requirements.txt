@@ -1,5 +1,0 @@
-dnslib
-confluent_kafka
-protobuf
-cachetools
-

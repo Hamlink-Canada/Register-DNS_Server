@@ -1,74 +1,131 @@
-# APP RPT DNS Server
+# Repeater DNS directory
 
-Python DNS service for APP RPT portals.
+This service lets clients find a registered repeater node through DNS. It reads
+registration updates from Kafka and answers A, TXT, and IAX SRV queries for the node
+domain you configure. Only IPv4 registrations are supported.
 
-Overview
-- Listens to a Kafka topic and keeps APP RPT node updates in an in-memory TTL cache.
-- Answers DNS A, SRV and TXT queries for nodes from cache.
+You need Docker, a reachable Kafka broker, and a registrar publishing to the same
+Kafka topic. Each DNS instance reads the full topic and keeps its own directory in
+memory. After a restart, it rebuilds that directory from Kafka and ignores expired
+registrations.
 
-Quick Start
+## Run the service
 
-Prerequisites
-- Python 3.8+
-- `protoc` (Protocol Buffers compiler) for generating `apprptdns/dns_pb2.py`
-- Kafka cluster accessible to the server
+Choose a versioned image from `ghcr.io/hamlink-canada/rpt-dnsserver` when a release
+is available. To run this checkout before an image is published, follow
+[Build an image](#build-an-image) and use `rpt-dnsserver:local` below.
 
-Install
+Replace the broker address and node domain with your own:
 
-1. Create and activate a virtual environment (recommended):
+```sh
+IMAGE=rpt-dnsserver:local
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+docker run -d --name rpt-dns --restart unless-stopped \
+  --publish 5054:5054/udp \
+  --publish 5054:5054/tcp \
+  --env RPT_KAFKA__BOOTSTRAP=kafka.example.org:9092 \
+  --env RPT_KAFKA__TOPIC=rpt.registrations \
+  --env RPT_DOMAIN=nodes.example.org \
+  "$IMAGE"
 ```
 
-2. Generate protobuf bindings:
+The Kafka topic must contain compatible registration messages. The broker addresses
+advertised by Kafka must also be reachable from the container.
 
-```bash
-./build_proto.sh
+The example listens on host port 5054 so you can try it without replacing an existing
+DNS server. To serve standard DNS traffic, publish host port 53 to container port
+5054 for both UDP and TCP. Configure your resolver to send queries for the chosen
+node domain to this service.
+
+## Configuration
+
+The settings most deployments need are:
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `RPT_DOMAIN` | `nodes.example.org` | Domain used in node lookups. |
+| `RPT_KAFKA__BOOTSTRAP` | `localhost:9092` | Kafka bootstrap address. |
+| `RPT_KAFKA__TOPIC` | `rpt.registrations` | Topic used by the registrars. |
+| `RPT_PORT` | `5054` | TCP and UDP port inside the container. |
+| `RPT_CACHE_SIZE` | `10000` | Maximum number of directory entries. |
+| `RPT_WORKERS` | `32` | Maximum concurrent request workers per listener. |
+
+Dynaconf loads `settings.toml`, then an optional `.secrets.toml`, from the working
+directory. Environment variables beginning with `RPT_` override those files. Use
+two underscores for nested settings, as in `RPT_KAFKA__TOPIC`.
+
+To keep configuration on the host, mount a directory at `/config` and set
+`RPT_CONFIG_DIR=/config`. Files use plain TOML without environment sections. Keep
+credentials out of version control. See [directory behavior](docs/directory.md)
+for the remaining settings and Kafka replay details.
+
+## Check a registration
+
+For a node that has registered as `1234`:
+
+```sh
+dig @127.0.0.1 -p 5054 1234.nodes.example.org A
+dig @127.0.0.1 -p 5054 1234.nodes.example.org TXT
+dig @127.0.0.1 -p 5054 _iax._udp.1234.nodes.example.org SRV
 ```
 
-Configuration
-- Edit `config.ini` to point to your Kafka bootstrap servers and tune cache settings. Example:
+The A record contains the node's address, TXT contains registration metadata, and
+SRV contains its IAX endpoint. Answers have a TTL of at most 60 seconds, shortened
+when the registration is about to expire. Replaying an old Kafka message does not
+extend its lifetime.
 
-```ini
-[kafka]
-bootstrap=localhost:9092
-topic=test
+If a lookup returns `SERVFAIL`, check that the node has a current registration and
+that the query uses the configured domain. Missing or expired nodes and unsupported
+query types receive `SERVFAIL`.
 
-[cache]
-size=10240
-ttl=60
-
-[dns]
-basedomain=nodes.pttlink.org
-port=5054
+```sh
+docker logs --tail 100 rpt-dns
+docker stop rpt-dns
 ```
 
-Running the DNS server
+If no registrations appear, check the broker's advertised addresses, the topic name,
+and whether a registrar has published an update. Size the directory for the number
+of nodes on your network. No persistent volume is required for the in-memory cache;
+Kafka retention determines what can be replayed after a restart.
 
-From the `dnsserver/` directory run:
+## Build an image
 
-```bash
-python3 dnsserver.py
+From this checkout, with Docker Buildx and Python 3.13+ installed:
+
+```sh
+PROTOBUF_REV=$(python3 scripts/dependency.py)
+docker buildx build --load \
+  --build-context "rpt_protobuf=https://github.com/Hamlink-Canada/rpt_protobuf.git#${PROTOBUF_REV}" \
+  --tag rpt-dnsserver:local .
 ```
 
-This starts UDP, TCP DNS listeners on the configured port and a messagebus consumer that populates the cache.
+This fetches the public protobuf dependency at the revision pinned by this project.
+The image runs as UID/GID 10001 and starts `rpt-dns`. Configuration files mounted into
+the container must be readable by that user.
 
-Sending test updates
+## Development
 
-`senddns.py` is provided as a simple example that publishes a protobuf `update` message to Kafka. It uses the Kafka producer to send a serialized `update` message to the configured topic.
+Use Python 3.13+ and uv. Place `dnsserver` and `rpt_protobuf` next to one another,
+with the library checked out at the revision printed by `scripts/dependency.py`.
+The uv source override installs that sibling library in editable mode.
 
-Notes and troubleshooting
-- `requirements.txt` lists `confluent_kafka` (used by the consumer). The `senddns.py` example imports `KafkaProducer` from `kafka` (the `kafka-python` library). If you plan to use `senddns.py` as-is, install `kafka-python` or change `senddns.py` to use `confluent_kafka.Producer` for consistency.
-- Run `./build_proto.sh` after editing `dns.proto` to regenerate `apprptdns/dns_pb2.py`.
-- The cache uses `cachetools.TTLCache`; entries are kept according to `config.ini` settings.
+```sh
+uv sync --locked
+make check test build
+uv run --locked rpt-dns
+```
 
-Contributing / Notes
-- This project is a work in progress. The `apprptdns` package contains the DNS logic (`dns.py`), cache handling, the Kafka consumer (`messagebus.py`), and request handlers (`handlers.py`).
-- There are small implementation details to consider (see `apprptdns/servers.py` and `senddns.py`) which may need adjustments depending on your deployment or preferred Kafka client.
+To build with local library changes, replace the remote build context above with
+`--build-context rpt_protobuf=../rpt_protobuf`. Standard Python installations use the
+full Git SHA declared in `pyproject.toml`. Update the dependency pin and lockfile
+together when adopting a new library revision; generated bindings belong in
+`rpt_protobuf`.
 
-License
+CI checks Python 3.13 and 3.14 and is configured to build and check runtime imports
+on Linux AMD64 and ARM64. Version tags publish versioned images and commit-SHA tags;
+stable releases also update `latest`. Pull requests do not publish images. Python
+packages are not published to PyPI.
 
-See the `LICENSE` file for license information.
+## License
+
+[AGPL-3.0-or-later](LICENSE).
