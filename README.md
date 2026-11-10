@@ -99,14 +99,14 @@ docker buildx build --load \
   --tag rpt-dnsserver:local .
 ```
 
-This fetches the public protobuf dependency at the revision pinned by this project.
+This fetches the public protobuf dependency from its `main` branch.
 The image runs as UID/GID 10001 and starts `rpt-dns`. Configuration files mounted into
 the container must be readable by that user.
 
 ## Development
 
 Use Python 3.13+ and uv. Place `dnsserver` and `rpt_protobuf` next to one another,
-with the library checked out at the revision printed by `scripts/dependency.py`.
+with the library checked out on an up-to-date `main` branch.
 The uv source override installs that sibling library in editable mode.
 
 ```sh
@@ -117,8 +117,8 @@ uv run --locked rpt-dns
 
 To build with local library changes, replace the remote build context above with
 `--build-context rpt_protobuf=../rpt_protobuf`. Standard Python installations use the
-full Git SHA declared in `pyproject.toml`. Update the dependency pin and lockfile
-together when adopting a new library revision; generated bindings belong in
+`main` branch declared in `pyproject.toml`. Refresh the sibling checkout and
+lockfile when dependency metadata changes; generated bindings belong in
 `rpt_protobuf`.
 
 CI checks Python 3.13 and 3.14 and is configured to build and check runtime imports

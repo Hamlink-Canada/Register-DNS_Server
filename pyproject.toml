@@ -9,7 +9,7 @@ description = "Repeater DNS directory"
 requires-python = ">=3.13"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
-dependencies = ["rpt-protobuf @ git+https://github.com/Hamlink-Canada/rpt_protobuf.git@aefcc36ebb149c175429ddea86c482cf37f5ebd4", "dynaconf>=3.3.5,<4", "confluent-kafka>=2.16,<3", "dnslib>=0.9.26,<1"]
+dependencies = ["rpt-protobuf @ git+https://github.com/Hamlink-Canada/rpt_protobuf.git@main", "dynaconf>=3.3.5,<4", "confluent-kafka>=2.16,<3", "dnslib>=0.9.26,<1"]
 
 [project.scripts]
 rpt-dns = "rpt_dns.cli:main"
