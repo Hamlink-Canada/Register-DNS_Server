@@ -5,19 +5,22 @@ from threading import Event
 
 from confluent_kafka import OFFSET_BEGINNING, Consumer, KafkaException, TopicPartition
 
+from rpt_dns.kafka_config import client_config
+
 
 class MessageBus:
     def __init__(self, settings, directory):
         self.settings, self.directory = settings, directory
         self.stopped = Event()
-        self.consumer = Consumer(
+        config = client_config(settings)
+        config.update(
             {
-                "bootstrap.servers": settings.KAFKA.BOOTSTRAP,
                 "group.id": settings.KAFKA.GROUP,
                 "enable.auto.commit": False,
                 "auto.offset.reset": "earliest",
             }
         )
+        self.consumer = Consumer(config)
         self.partitions = set()
 
     def serve(self):

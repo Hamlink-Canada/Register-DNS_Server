@@ -15,6 +15,7 @@ def test_partition_expansion_preserves_positions_and_replays_uninitialized(
         assigned = []
 
         def __init__(self, config):
+            self.config = config
             assert config["auto.offset.reset"] == "earliest"
 
         def list_topics(self, topic, timeout):
@@ -50,3 +51,34 @@ def test_partition_expansion_preserves_positions_and_replays_uninitialized(
         (1, OFFSET_BEGINNING),
     ]
     assert bus.consumer.closed
+
+
+def test_message_bus_uses_tls_scram_consumer_settings(monkeypatch):
+    created = {}
+
+    class Consumer:
+        def __init__(self, config):
+            created.update(config)
+
+    monkeypatch.setattr("rpt_dns.messagebus.Consumer", Consumer)
+    settings = SimpleNamespace(
+        KAFKA=SimpleNamespace(
+            BOOTSTRAP="kafka:9093",
+            TOPIC="rpt.registrations",
+            GROUP="rpt-dns",
+            SECURITY_PROTOCOL="SASL_SSL",
+            SASL_MECHANISM="SCRAM-SHA-512",
+            SASL_USERNAME="registration-dns-consumer",
+            SASL_PASSWORD="test-password",
+            SSL_CA_LOCATION="/var/run/kafka/ca.crt",
+        )
+    )
+
+    MessageBus(settings, None)
+
+    assert created["bootstrap.servers"] == "kafka:9093"
+    assert created["security.protocol"] == "SASL_SSL"
+    assert created["sasl.mechanism"] == "SCRAM-SHA-512"
+    assert created["sasl.username"] == "registration-dns-consumer"
+    assert created["sasl.password"] == "test-password"
+    assert created["ssl.ca.location"] == "/var/run/kafka/ca.crt"
