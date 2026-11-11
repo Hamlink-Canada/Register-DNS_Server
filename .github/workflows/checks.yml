@@ -21,7 +21,7 @@ jobs:
         run: echo "ref=$(python service/scripts/dependency.py)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: Hamlink-Canada/Register-DNS_Server
+          repository: Hamlink-Canada/rpt_protobuf
           ref: ${{ steps.dependency.outputs.ref }}
           path: rpt_protobuf
           persist-credentials: false
