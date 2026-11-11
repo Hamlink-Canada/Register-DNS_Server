@@ -28,6 +28,11 @@ def load_settings(**overrides):
                 "bootstrap": "localhost:9092",
                 "topic": "rpt.registrations",
                 "group": "rpt-dns",
+                "security_protocol": "",
+                "sasl_mechanism": "",
+                "sasl_username": "",
+                "sasl_password": "",
+                "ssl_ca_location": "",
             },
         }
     )
@@ -44,4 +49,16 @@ def load_settings(**overrides):
         raise ValueError("invalid numeric DNS setting")
     if settings.PORT > 65535 or not settings.DOMAIN or not settings.KAFKA.TOPIC:
         raise ValueError("invalid DNS settings")
+    if settings.KAFKA.SECURITY_PROTOCOL:
+        if settings.KAFKA.SECURITY_PROTOCOL != "SASL_SSL":
+            raise ValueError("Kafka security protocol must be SASL_SSL")
+        if not all(
+            (
+                settings.KAFKA.SASL_MECHANISM == "SCRAM-SHA-512",
+                settings.KAFKA.SASL_USERNAME,
+                settings.KAFKA.SASL_PASSWORD,
+                settings.KAFKA.SSL_CA_LOCATION,
+            )
+        ):
+            raise ValueError("Kafka SASL-SCRAM and TLS credentials are required")
     return settings

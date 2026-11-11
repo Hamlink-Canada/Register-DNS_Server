@@ -130,7 +130,7 @@ stable releases also update `latest`. Pull requests do not publish images. Pytho
 packages are not published to PyPI.
 
 Images are published only after the release workflow passes its tests and container
-checks. Publishing a GitHub prerelease (for example, `v0.2.0-rc.1`) publishes its
+checks. Publishing a GitHub prerelease (for example, `v1.0.1-rc.1`) publishes its
 version and commit-SHA image tags without updating `latest`. Pushing a tag alone
 does not publish an image. Registry authentication uses the built-in `GITHUB_TOKEN`.
 
