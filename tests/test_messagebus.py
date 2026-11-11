@@ -41,7 +41,12 @@ def test_partition_expansion_preserves_positions_and_replays_uninitialized(
 
     monkeypatch.setattr("rpt_dns.messagebus.Consumer", Consumer)
     settings = SimpleNamespace(
-        KAFKA=SimpleNamespace(BOOTSTRAP="localhost:9092", GROUP="test", TOPIC="registrations")
+        KAFKA=SimpleNamespace(
+            BOOTSTRAP="localhost:9092",
+            GROUP="test",
+            TOPIC="registrations",
+            SECURITY_PROTOCOL="",
+        )
     )
     bus = MessageBus(settings, None)
     bus.partitions = {0}
