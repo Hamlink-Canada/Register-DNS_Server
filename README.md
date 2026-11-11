@@ -124,9 +124,15 @@ lockfile when dependency metadata changes; generated bindings belong in
 `rpt_protobuf`.
 
 CI checks Python 3.13 and 3.14 and is configured to build and check runtime imports
-on Linux AMD64 and ARM64. Version tags publish versioned images and commit-SHA tags;
+on Linux AMD64 and ARM64. Published GitHub releases with `vMAJOR.MINOR.PATCH` tags publish versioned images
+and commit-SHA tags;
 stable releases also update `latest`. Pull requests do not publish images. Python
 packages are not published to PyPI.
+
+Images are published only after the release workflow passes its tests and container
+checks. Publishing a GitHub prerelease (for example, `v0.2.0-rc.1`) publishes its
+version and commit-SHA image tags without updating `latest`. Pushing a tag alone
+does not publish an image. Registry authentication uses the built-in `GITHUB_TOKEN`.
 
 ## License
 
