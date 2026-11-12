@@ -18,6 +18,6 @@ directory is complete. Kafka retention therefore needs to cover the replay windo
 This service does not authenticate incoming registrations or write Kafka events.
 Those responsibilities belong to the registrar services.
 
-Start with the repository [README](../README.md) for a local container example and
-configuration summary. See [directory behavior](directory.md) for record semantics
-and expiry, and [glossary](glossary.md) for domain terms.
+The repository [README](../README.md) shows how to run the service. [Directory
+behavior](directory.md) explains record semantics and expiry; the [glossary](glossary.md)
+defines shared terms.
