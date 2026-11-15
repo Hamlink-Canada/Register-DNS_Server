@@ -26,7 +26,7 @@ def read_exact(sock, size):
 class UDPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data, sock = self.request
-        response = respond(data, self.server.directory, self.server.domain)
+        response = respond(data, self.server.directory, self.server.domain, self.client_address)
         if response:
             sock.sendto(response, self.client_address)
 
@@ -37,7 +37,10 @@ class TCPHandler(socketserver.BaseRequestHandler):
         try:
             size = unpack("!H", read_exact(self.request, 2))[0]
             response = respond(
-                read_exact(self.request, size), self.server.directory, self.server.domain
+                read_exact(self.request, size),
+                self.server.directory,
+                self.server.domain,
+                self.client_address,
             )
             if response:
                 self.request.sendall(pack("!H", len(response)) + response)
