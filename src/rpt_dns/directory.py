@@ -15,6 +15,7 @@ class Directory:
         self.capacity, self.max_lifetime, self.clock_skew = capacity, max_lifetime, clock_skew
         self.clock = clock
         self.entries = OrderedDict()
+        self.watermarks = {}
         self.lock = RLock()
 
     def ingest(self, data):
@@ -34,7 +35,7 @@ class Directory:
                 and 1 <= node.port <= 65535
                 and 0 < node.ttl <= self.max_lifetime
                 and node.server
-                and len(node.server) <= 128
+                and len(("RH=" + node.server).encode("utf-8")) <= 255
             ):
                 return False
             if timestamp > now + self.clock_skew or timestamp + node.ttl <= now:
@@ -42,16 +43,26 @@ class Directory:
         except (DecodeError, ValueError, OverflowError):
             return False
         with self.lock:
-            previous = self.entries.get(node.id)
-            if previous and (previous.timestamp.seconds, previous.timestamp.nanos) >= (
+            now = self.clock()
+            previous = self.watermarks.get(node.id)
+            if previous and previous[0] >= (
                 entry.timestamp.seconds,
                 entry.timestamp.nanos,
             ):
                 return False
+            if previous is None and len(self.watermarks) >= self.capacity:
+                for key, value in tuple(self.watermarks.items()):
+                    if value[1] <= now:
+                        del self.watermarks[key]
+                        self.entries.pop(key, None)
+                if len(self.watermarks) >= self.capacity:
+                    return False
+            self.watermarks[node.id] = (
+                (entry.timestamp.seconds, entry.timestamp.nanos),
+                timestamp + self.max_lifetime + self.clock_skew,
+            )
             self.entries[node.id] = entry
             self.entries.move_to_end(node.id)
-            while len(self.entries) > self.capacity:
-                self.entries.popitem(last=False)
         return True
 
     def get(self, node_id):
