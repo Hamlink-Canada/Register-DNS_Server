@@ -54,6 +54,7 @@ class Directory:
                 for key, value in tuple(self.watermarks.items()):
                     if value[1] <= now:
                         del self.watermarks[key]
+                        self.entries.pop(key, None)
                 if len(self.watermarks) >= self.capacity:
                     return False
             self.watermarks[node.id] = (

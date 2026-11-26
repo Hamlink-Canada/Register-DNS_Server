@@ -91,3 +91,4 @@ def test_expired_record_keeps_watermark_until_accepted_lifetime_passes():
     assert not directory.ingest(update(timestamp=102, ttl=1, node=2).SerializeToString())
     now[0] = 126
     assert directory.ingest(update(timestamp=126, ttl=1, node=2).SerializeToString())
+    assert set(directory.entries) == {2}
