@@ -28,7 +28,10 @@ class UDPHandler(socketserver.BaseRequestHandler):
         data, sock = self.request
         response = respond(data, self.server.directory, self.server.domain, self.client_address)
         if response:
-            sock.sendto(response, self.client_address)
+            try:
+                sock.sendto(response, self.client_address)
+            except OSError:
+                pass
 
 
 class TCPHandler(socketserver.BaseRequestHandler):
@@ -104,6 +107,9 @@ def main():
         thread.start()
         threads.append(thread)
         while not stopped:
+            if any(not thread.is_alive() for thread in threads):
+                logging.error("DNS or message-bus service thread stopped unexpectedly")
+                break
             time.sleep(0.2)
     finally:
         bus.stopped.set()

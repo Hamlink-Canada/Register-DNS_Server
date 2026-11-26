@@ -1,5 +1,6 @@
 """Network-neutral Dynaconf configuration."""
 
+import math
 import os
 from pathlib import Path
 
@@ -47,8 +48,25 @@ def load_settings(**overrides):
         for v in [settings.PORT, settings.CACHE_SIZE, settings.MAX_LIFETIME, settings.WORKERS]
     ):
         raise ValueError("invalid numeric DNS setting")
-    if settings.PORT > 65535 or not settings.DOMAIN or not settings.KAFKA.TOPIC:
+    domain = str(settings.DOMAIN).rstrip(".")
+    encoded_domain = domain.encode("idna")
+    labels = encoded_domain.split(b".")
+    if (
+        settings.PORT > 65535
+        or not domain
+        or len(encoded_domain) + 30 > 253
+        or any(not label or len(label) > 63 for label in labels)
+        or not settings.KAFKA.TOPIC
+    ):
         raise ValueError("invalid DNS settings")
+    if isinstance(settings.CLOCK_SKEW, bool):
+        raise ValueError("clock skew must be a finite non-negative number")
+    try:
+        settings.CLOCK_SKEW = float(settings.CLOCK_SKEW)
+    except (TypeError, ValueError) as error:
+        raise ValueError("clock skew must be a finite non-negative number") from error
+    if not math.isfinite(settings.CLOCK_SKEW) or settings.CLOCK_SKEW < 0:
+        raise ValueError("clock skew must be a finite non-negative number")
     if settings.KAFKA.SECURITY_PROTOCOL:
         if settings.KAFKA.SECURITY_PROTOCOL != "SASL_SSL":
             raise ValueError("Kafka security protocol must be SASL_SSL")

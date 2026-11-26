@@ -71,11 +71,23 @@ def test_dns_uses_nested_message_and_remaining_ttl(kind, name):
         assert result.rr[0].rdata.port == 4569
 
 
-def test_directory_capacity_and_domain_isolation():
+def test_directory_capacity_rejects_new_ids_and_domain_isolation():
     directory = Directory(capacity=1, clock=lambda: 100)
-    directory.ingest(update(node=1).SerializeToString())
-    directory.ingest(update(node=2).SerializeToString())
-    assert directory.get(1) is None
+    assert directory.ingest(update(node=1).SerializeToString())
+    assert not directory.ingest(update(node=2).SerializeToString())
+    assert directory.get(1) is not None
     request = DNSRecord.question("2.attacker.example", "A")
     result = DNSRecord.parse(respond(request.pack(), directory, "nodes.example.org"))
     assert result.header.rcode == RCODE.SERVFAIL
+
+
+def test_expired_record_keeps_watermark_until_accepted_lifetime_passes():
+    now = [100.0]
+    directory = Directory(capacity=1, max_lifetime=20, clock_skew=5, clock=lambda: now[0])
+    assert directory.ingest(update(timestamp=100, ttl=1, node=1).SerializeToString())
+    now[0] = 102
+    assert directory.get(1) is None
+    assert not directory.ingest(update(timestamp=101, ttl=1, node=1).SerializeToString())
+    assert not directory.ingest(update(timestamp=102, ttl=1, node=2).SerializeToString())
+    now[0] = 126
+    assert directory.ingest(update(timestamp=126, ttl=1, node=2).SerializeToString())
